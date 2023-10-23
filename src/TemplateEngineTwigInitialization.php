@@ -12,13 +12,15 @@ class TemplateEngineTwigInitialization extends Initialization
 
     protected const SCHEMA_MIGRATIONS = [];
 
-    public function __construct()
+    public function __construct(string $packageAlias = '')
     {
-        parent::__construct('template-engine-twig', '1.0.0');
+        parent::__construct('template-engine-twig', '1.0.0', $packageAlias);
     }
 
     public function initServices(string $domain, RegistryInterface $registry): void
     {
-        $registry->setTemplateEngine(new TwigTemplateEngine());
+        /** @var TwigTemplateEngine */
+        $template = $registry->createObject(TwigTemplateEngine::class);
+        $registry->setTemplateEngine($template);
     }
 }

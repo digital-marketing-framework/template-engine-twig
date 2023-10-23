@@ -2,16 +2,15 @@
 
 namespace DigitalMarketingFramework\TemplateEngineTwig\TemplateEngine;
 
-use Twig\Environment;
-use Twig\Loader\ArrayLoader;
+use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\RenderingDefinition\RenderingDefinitionInterface;
+use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\Schema\ContainerSchema;
+use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\Schema\SchemaInterface;
+use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\Schema\StringSchema;
+use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
 use DigitalMarketingFramework\Core\Model\Data\Value\ValueInterface;
 use DigitalMarketingFramework\Core\TemplateEngine\TemplateEngineInterface;
-use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
-use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\Schema\StringSchema;
-use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\Schema\ContainerSchema;
-
-use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\Schema\SchemaInterface;
-use DigitalMarketingFramework\Core\ConfigurationDocument\SchemaDocument\RenderingDefinition\RenderingDefinitionInterface;
+use Twig\Environment;
+use Twig\Loader\ArrayLoader;
 
 class TwigTemplateEngine implements TemplateEngineInterface
 {
@@ -42,7 +41,7 @@ class TwigTemplateEngine implements TemplateEngineInterface
          *   {{ key }}: {{ value }} <br>
          * {% endfor %}
          */
-        if(array_key_exists(self::KEYWORD_ALL_VALUES, $data)){
+        if (array_key_exists(self::KEYWORD_ALL_VALUES, $data)) {
             throw new DigitalMarketingFrameworkException('variable "all_values" still exists');
         }
         $data[self::KEYWORD_ALL_VALUES] = $data;
@@ -52,6 +51,7 @@ class TwigTemplateEngine implements TemplateEngineInterface
         $twig = new Environment($loader);
         $template = $twig->createTemplate($template);
         $result = $template->render($data);
+
         return $result;
     }
 

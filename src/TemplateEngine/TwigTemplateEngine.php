@@ -17,6 +17,7 @@ class TwigTemplateEngine implements TemplateEngineInterface
     public const KEYWORD_ALL_VALUES = 'all_values';
 
     public const KEY_TEMPLATE = 'template';
+
     public const DEFAULT_TEMPLATES = [
         TemplateEngineInterface::FORMAT_PLAIN_TEXT => "{% for key,value in ' . self::KEYWORD_ALL_VALUES . ' %}\n{{ key }}: {{ value }}\n{% endfor %}",
         TemplateEngineInterface::FORMAT_HTML => "<table>\n<tr>\n<td>Key</td>\n<td>Value</td>\n</tr>\n{% for key,value in ' . self::KEYWORD_ALL_VALUES . ' %}\n<tr>\n<td>{{ key }}</td>\n<td>{{ value }}</td>\n</tr>\n{% endfor %}\n</table>",
@@ -44,15 +45,15 @@ class TwigTemplateEngine implements TemplateEngineInterface
         if (array_key_exists(self::KEYWORD_ALL_VALUES, $data)) {
             throw new DigitalMarketingFrameworkException('variable "all_values" still exists');
         }
+
         $data[self::KEYWORD_ALL_VALUES] = $data;
 
         $template = $config[static::KEY_TEMPLATE];
         $loader = new ArrayLoader();
         $twig = new Environment($loader);
         $template = $twig->createTemplate($template);
-        $result = $template->render($data);
 
-        return $result;
+        return $template->render($data);
     }
 
     public function getSchema(string $format): SchemaInterface
@@ -63,6 +64,7 @@ class TwigTemplateEngine implements TemplateEngineInterface
         if (!isset(static::DEFAULT_TEMPLATES[$format])) {
             throw new DigitalMarketingFrameworkException(sprintf('unknown template format "%s"', $format));
         }
+
         $templateSchema = new StringSchema(static::DEFAULT_TEMPLATES[$format]);
         $templateSchema->getRenderingDefinition()->setFormat(RenderingDefinitionInterface::FORMAT_TEXT);
         $templateSchema->getRenderingDefinition()->setLabel(static::TEMPLATE_LABELS[$format]);

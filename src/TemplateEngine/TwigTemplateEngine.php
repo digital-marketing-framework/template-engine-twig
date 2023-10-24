@@ -43,7 +43,7 @@ class TwigTemplateEngine implements TemplateEngineInterface
          * {% endfor %}
          */
         if (array_key_exists(self::KEYWORD_ALL_VALUES, $data)) {
-            throw new DigitalMarketingFrameworkException('variable "all_values" still exists');
+            throw new DigitalMarketingFrameworkException('variable "' . self::KEYWORD_ALL_VALUES . '" already exists');
         }
 
         $data[self::KEYWORD_ALL_VALUES] = $data;

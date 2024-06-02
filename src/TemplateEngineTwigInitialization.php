@@ -8,8 +8,6 @@ use DigitalMarketingFramework\TemplateEngineTwig\TemplateEngine\TwigTemplateEngi
 
 class TemplateEngineTwigInitialization extends Initialization
 {
-    protected const PLUGINS = [];
-
     protected const SCHEMA_MIGRATIONS = [];
 
     public function __construct(string $packageAlias = '')
@@ -19,8 +17,7 @@ class TemplateEngineTwigInitialization extends Initialization
 
     public function initServices(string $domain, RegistryInterface $registry): void
     {
-        /** @var TwigTemplateEngine */
-        $template = $registry->createObject(TwigTemplateEngine::class);
+        $template = $registry->createObject(TwigTemplateEngine::class, [$registry]);
         $registry->setTemplateEngine($template);
     }
 }

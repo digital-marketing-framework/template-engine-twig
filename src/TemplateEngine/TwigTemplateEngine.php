@@ -3,17 +3,30 @@
 namespace DigitalMarketingFramework\TemplateEngineTwig\TemplateEngine;
 
 use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
-use DigitalMarketingFramework\Core\Model\Data\Value\ValueInterface;
+use DigitalMarketingFramework\Core\Log\LoggerAwareInterface;
+use DigitalMarketingFramework\Core\Log\LoggerAwareTrait;
+use DigitalMarketingFramework\Core\Registry\RegistryInterface;
 use DigitalMarketingFramework\Core\SchemaDocument\RenderingDefinition\RenderingDefinitionInterface;
 use DigitalMarketingFramework\Core\SchemaDocument\Schema\ContainerSchema;
 use DigitalMarketingFramework\Core\SchemaDocument\Schema\SchemaInterface;
 use DigitalMarketingFramework\Core\SchemaDocument\Schema\StringSchema;
 use DigitalMarketingFramework\Core\TemplateEngine\TemplateEngineInterface;
+use DigitalMarketingFramework\Core\Utility\GeneralUtility;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
+use Twig\Loader\FilesystemLoader;
 
-class TwigTemplateEngine implements TemplateEngineInterface
+class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
+    public function __construct(
+        protected RegistryInterface $registry,
+    ) {
+    }
+
     public const KEYWORD_ALL_VALUES = 'all_values';
 
     public const KEY_TEMPLATE = 'template';
@@ -28,10 +41,8 @@ class TwigTemplateEngine implements TemplateEngineInterface
         TemplateEngineInterface::FORMAT_HTML => 'Template (HTML)',
     ];
 
-    /**
-     * @param array<string,mixed> $config
-     * @param array<string,string|ValueInterface> $data
-     */
+    public const KEY_TEMPLATE_NAME = 'templateName';
+
     public function render(array $config, array $data): string
     {
         /**
@@ -47,13 +58,34 @@ class TwigTemplateEngine implements TemplateEngineInterface
         }
 
         $data[self::KEYWORD_ALL_VALUES] = $data;
+        $templateService = $this->registry->getTemplateService();
 
-        $template = $config[static::KEY_TEMPLATE];
-        $loader = new ArrayLoader();
+        $template = $config[static::KEY_TEMPLATE] ?? '';
+        $templateNames = GeneralUtility::castValueToArray($config[static::KEY_TEMPLATE_NAME] ?? '');
+        foreach ($templateNames as $templateName) {
+            $possibleTemplate = $templateService->getTemplate($templateName);
+            if ($possibleTemplate !== null) {
+                $template = $possibleTemplate;
+                break;
+            }
+        }
+
+        $templateFolders = $templateService->getPartialFolderPaths();
+
+        $loader = $templateFolders === []
+            ? new ArrayLoader()
+            : new FilesystemLoader($templateFolders);
         $twig = new Environment($loader);
-        $template = $twig->createTemplate($template);
 
-        return $template->render($data);
+        try {
+            $template = $twig->createTemplate($template);
+
+            return $template->render($data);
+        } catch (LoaderError|SyntaxError $e) {
+            $this->logger->error($e->getMessage());
+        }
+
+        return '';
     }
 
     public function getSchema(string $format): SchemaInterface

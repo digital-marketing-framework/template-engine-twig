@@ -3,6 +3,8 @@
 namespace DigitalMarketingFramework\TemplateEngineTwig\TemplateEngine;
 
 use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
+use DigitalMarketingFramework\Core\GlobalConfiguration\GlobalConfigurationAwareInterface;
+use DigitalMarketingFramework\Core\GlobalConfiguration\GlobalConfigurationAwareTrait;
 use DigitalMarketingFramework\Core\Log\LoggerAwareInterface;
 use DigitalMarketingFramework\Core\Log\LoggerAwareTrait;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface;
@@ -18,9 +20,10 @@ use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
 use Twig\Loader\FilesystemLoader;
 
-class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterface
+class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterface, GlobalConfigurationAwareInterface
 {
     use LoggerAwareTrait;
+    use GlobalConfigurationAwareTrait;
 
     public function __construct(
         protected RegistryInterface $registry,
@@ -75,7 +78,12 @@ class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterfac
         $loader = $templateFolders === []
             ? new ArrayLoader()
             : new FilesystemLoader($templateFolders);
-        $twig = new Environment($loader);
+
+        $debug = $this->globalConfiguration->get('core', [])['debug'] ?? false;
+
+        $twig = new Environment($loader, [
+            'debug' => $debug,
+        ]);
 
         try {
             $template = $twig->createTemplate($template);
@@ -83,9 +91,9 @@ class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterfac
             return $template->render($data);
         } catch (LoaderError|SyntaxError $e) {
             $this->logger->error($e->getMessage());
-        }
 
-        return '';
+            return $this->registry->renderErrorMessage($e->getMessage());
+        }
     }
 
     public function getSchema(string $format): SchemaInterface

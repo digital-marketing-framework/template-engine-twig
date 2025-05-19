@@ -8,8 +8,10 @@ use Twig\TwigFunction;
 
 class TwigExtension extends AbstractExtension
 {
+    /** @var array<string,TwigFilter> */
     protected array $filters = [];
 
+    /** @var array<string,TwigFunction> */
     protected array $functions = [];
 
     public function addFilter(string $name, callable $fnc): void

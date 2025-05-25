@@ -46,7 +46,7 @@ class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterfac
 
     public const KEY_TEMPLATE_NAME = 'templateName';
 
-    public function render(array $config, array $data): string
+    public function render(array $config, array $data, bool $frontend = true): string
     {
         /**
          * Extend $data array with all_values
@@ -57,11 +57,20 @@ class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterfac
          * {% endfor %}
          */
         if (array_key_exists(self::KEYWORD_ALL_VALUES, $data)) {
-            throw new DigitalMarketingFrameworkException('variable "' . self::KEYWORD_ALL_VALUES . '" already exists');
+            throw new DigitalMarketingFrameworkException('variable "' . static::KEYWORD_ALL_VALUES . '" already exists');
         }
 
-        $data[self::KEYWORD_ALL_VALUES] = $data;
-        $templateService = $this->registry->getTemplateService();
+        $data[static::KEYWORD_ALL_VALUES] = $data;
+
+        $twigExtension = new TwigExtension();
+
+        if ($frontend) {
+            $templateService = $this->registry->getTemplateService();
+        } else {
+            $templateService = $this->registry->getBackendTemplateService();
+            $twigExtension->addFunction('uri', $this->registry->getBackendUriBuilder()->build(...));
+            $twigExtension->addFunction('asset', $this->registry->getBackendAssetUriBuilder()->build(...));
+        }
 
         $template = $config[static::KEY_TEMPLATE] ?? '';
         $templateNames = GeneralUtility::castValueToArray($config[static::KEY_TEMPLATE_NAME] ?? '');
@@ -74,7 +83,6 @@ class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterfac
         }
 
         $templateFolders = $templateService->getPartialFolderPaths();
-
         $loader = $templateFolders === []
             ? new ArrayLoader()
             : new FilesystemLoader($templateFolders);
@@ -84,6 +92,7 @@ class TwigTemplateEngine implements TemplateEngineInterface, LoggerAwareInterfac
         $twig = new Environment($loader, [
             'debug' => $debug,
         ]);
+        $twig->addExtension($twigExtension);
 
         try {
             $template = $twig->createTemplate($template);
